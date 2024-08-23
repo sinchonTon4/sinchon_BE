@@ -1,5 +1,5 @@
 from django.db import models
-# from auths.models import User
+from auths.models import User
 
 class Community(models.Model):
     created_at = models.DateField(auto_now_add=True)
@@ -7,7 +7,7 @@ class Community(models.Model):
     description = models.TextField()
     img = models.ImageField(blank=True, upload_to='community_images/')
     like = models.IntegerField(default=0)
-    # user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.title
