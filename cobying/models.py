@@ -7,7 +7,7 @@ class Cobying(models.Model):
     created_at = models.DateField(auto_now_add=True)
     title = models.CharField(max_length=50)  # 제목
     description = models.TextField()  # 공구설명
-    img = models.ImageField(blank=True, upload_to='community_images/')
+    img = models.ImageField(blank=True, upload_to='cobying_images/')
     tag = models.ForeignKey(HashTag, on_delete=models.CASCADE)  # 해시태그 공동구매
     price = models.IntegerField(blank=True)
     product_name = models.CharField(max_length=50)
