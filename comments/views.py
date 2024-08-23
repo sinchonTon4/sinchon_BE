@@ -141,6 +141,10 @@ class CommentDetail(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
 
 class CommentLikeAdd(APIView):
+    def get_object(request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        return comment
+    
     def patch(self, request, pk):
         comment = self.get_object(pk)
         comment.like += 1
