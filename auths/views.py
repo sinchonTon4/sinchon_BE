@@ -7,7 +7,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 # Create your views here.
 
 class SignupView(views.APIView):
-    permission_classes = [AllowAny]
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
@@ -16,7 +15,6 @@ class SignupView(views.APIView):
         return Response({'messange':'회원가입 실패', 'error':serializer.errors})
     
 class LoginView(views.APIView):
-    permission_classes = [AllowAny]
     serializer_class= UserLoginSerializer
     def post(self, request):
         serializer = UserLoginSerializer(data = request.data)

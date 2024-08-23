@@ -21,7 +21,6 @@ class CommunityAPIView(GenericAPIView,
                        UpdateModelMixin, 
                        DestroyModelMixin, 
                        ListModelMixin):
-    permission_classes = [IsAuthenticated]
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
 
@@ -153,7 +152,6 @@ class CommunityAPIView(GenericAPIView,
     
     
 class CommunityLikeAdd(APIView):
-    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         community = get_object_or_404(Community, pk=pk)
         return community
@@ -174,7 +172,6 @@ class CommunityLikeAdd(APIView):
 
 
 class TagDetail(APIView):
-    permission_classes = [AllowAny]
     def get_object(request, pk):
         tag = get_object_or_404(HashTag, pk=pk)
         return tag

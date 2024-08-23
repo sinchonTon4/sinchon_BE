@@ -8,7 +8,6 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class CobyingCreateView(APIView):
-    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         # 요청 데이터를 CobyingSerializer를 사용해 역직렬화(deserialize)
         serializer = CobyingSerializer(data=request.data)
@@ -24,7 +23,6 @@ class CobyingCreateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class CobyingListView(APIView):
-    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         product_category = request.query_params.get('category')
         order = request.query_params.get('order')
@@ -65,7 +63,6 @@ class CobyingListView(APIView):
 
 
 class CobyingDetail(APIView):
-    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         cobying = get_object_or_404(Cobying, pk=pk)
         return cobying
@@ -77,7 +74,6 @@ class CobyingDetail(APIView):
     
 
 class CountAdd(APIView):
-    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         cobying = get_object_or_404(Cobying, pk=pk)
         return cobying
@@ -98,7 +94,6 @@ class CountAdd(APIView):
     
 
 class TagDetail(APIView):
-    permission_classes = [AllowAny]
     def get_object(request, pk):
         tag = get_object_or_404(HashTag, pk=pk)
         return tag
