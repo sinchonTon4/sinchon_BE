@@ -6,7 +6,7 @@ class Community(models.Model):
     title = models.CharField(max_length=50)
     description = models.TextField()
     img = models.ImageField(blank=True, upload_to='community_images/')
-    like = models.IntegerField(default=0)
+    like = models.IntegerField(default=0, required=False)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
