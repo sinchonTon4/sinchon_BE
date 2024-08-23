@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = 'auths.User'
 
 # Application definition
 
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'auths',
     'comments',
+    'ingredients',
     'necessaries',
 ]
 
