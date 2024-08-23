@@ -70,3 +70,23 @@ class CobyingDetail(APIView):
         cobying = self.get_object(pk)
         serializer = CobyingSerializer(cobying)
         return Response(serializer.data)
+    
+
+class CountAdd(APIView):
+    def get_object(request, pk):
+        cobying = get_object_or_404(Cobying, pk=pk)
+        return cobying
+    
+    def patch(self, request, pk):
+        cobying = self.get_object(pk)
+        cobying.count += 1
+        cobying.save()
+
+        return Response({
+            "status": 200,
+            "message": "참여하기 완료.",
+            "data": {
+                "cobying": cobying.id,
+                "count": cobying.count,
+            }
+        }, status=status.HTTP_200_OK)
