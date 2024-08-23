@@ -10,6 +10,11 @@ class Community(models.Model):
     like = models.IntegerField(default=0)
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
     
+    CATEGORY_CHOICES = [
+        ('food', 'food'),
+        ('lifestyle', 'lifestyle'),
+    ]
+    category = models.CharField(choices=CATEGORY_CHOICES, max_length=30)
 
     def __str__(self):
         return self.title
