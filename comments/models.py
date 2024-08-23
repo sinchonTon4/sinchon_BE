@@ -1,10 +1,10 @@
 from django.db import models
-from auth.models import User
-from communities import Community
+from auths.models import User
+from community.models import Community
 
 class Comment(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    community_id = models.ForeignKey(Community, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments', null=True)
+    community_id = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='comments', null=True)
     description = models.TextField()
     like = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)

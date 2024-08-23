@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from .models import Comment
 from .serializers import CommentSerializer
 from auths.models import User
-from communities.models import Community
+from community.models import Community
 
 class CommentList(APIView):
     def get(self, request, communityId):
