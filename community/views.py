@@ -2,8 +2,8 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyModelMixin, ListModelMixin
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Community
-from .serializers import CommunitySerializer
+from .models import Community, HashTag
+from .serializers import CommunitySerializer, HashTagSerializer
 from comments.serializers import CommentSerializer 
 from comments.models import Comment
 from auths.models import User
@@ -34,13 +34,25 @@ class CommunityAPIView(GenericAPIView,
         return None
 
     def post(self, request, *args, **kwargs):
-
         # Community 생성 로직
         user = self.get_user_from_token(request)
         if user:
             serializer = CommunitySerializer(data=request.data)
             if serializer.is_valid():
-                serializer.save(user_id=user)
+                community = serializer.save(user_id=user)
+
+                community.tags.clear()
+                # 태그 리스트 가져오기
+                tags = request.data.get('tags', [])
+                print(tags)
+                for tag_name in tags:
+                    # 태그 이름으로 HashTag 객체 가져오거나 생성
+                    hashtag, created = HashTag.objects.get_or_create(hashtag=tag_name)
+                    # hashtag.save()
+                    print(hashtag)
+                    # 커뮤니티에 태그 추가
+                    community.tags.add(hashtag)
+
                 return Response({
                     'status': 'success',
                     'data': serializer.data
@@ -156,3 +168,4 @@ class CommunityLikeAdd(APIView):
                 "like": community.like
             }
         }, status=status.HTTP_200_OK)
+
