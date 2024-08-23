@@ -1,6 +1,6 @@
 from django.db import models
-from auth.models import User
-from communities import Community
+from auths.models import User
+from community.models import Community
 
 class Comment(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
