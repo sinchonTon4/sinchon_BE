@@ -6,7 +6,9 @@ from .models import Community
 from .serializers import CommunitySerializer
 from comments.serializers import CommentSerializer 
 from comments.models import Comment
-from rest_framework.permissions import IsAuthenticated
+from auths.models import User
+from rest_framework_simplejwt.tokens import AccessToken
+
 
 from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
@@ -19,14 +21,97 @@ class CommunityAPIView(GenericAPIView,
                        ListModelMixin):
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
-    #permission_classes = [IsAuthenticated]
+
+    def get_user_from_token(self, request):
+        """Helper method to extract user from JWT token"""
+        auth_header = request.headers.get('Authorization')
+        if auth_header:
+            _, token = auth_header.split()
+            access_token = AccessToken(token)
+            user_id = access_token['user_id']
+            return User.objects.get(pk=user_id)
+        return None
 
     def post(self, request, *args, **kwargs):
-        response = self.create(request, *args, **kwargs)
-        return Response({
-            'status': 'success',
-            'data': response.data
-        }, status=status.HTTP_201_CREATED)
+        if 'communityId' in kwargs:
+            user = self.get_user_from_token(request)
+            if user:
+                communityId = kwargs.get('communityId')
+                community = Community.objects.get(pk=communityId)
+                serializer = CommentSerializer(data=request.data)
+                if serializer.is_valid():
+                    comment = Comment.objects.create(
+                        user_id=user,
+                        community_id=community,
+                        description=serializer.validated_data['description'],
+                        like=serializer.validated_data['like']
+                    )
+                    return Response({
+                        "status": 201,
+                        "message": "댓글 작성 완료.",
+                        "data": {
+                            "comment_id": comment.id
+                        }    
+                    }, status=status.HTTP_201_CREATED)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Community 생성 로직
+        user = self.get_user_from_token(request)
+        if user:
+            serializer = CommunitySerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save(user_id=user)
+                return Response({
+                    'status': 'success',
+                    'data': serializer.data
+                }, status=status.HTTP_201_CREATED)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def patch(self, request, *args, **kwargs):
+        user = self.get_user_from_token(request)
+        if user:
+            community = self.get_object()
+            if community.user_id == user:
+                response = self.partial_update(request, *args, **kwargs)
+                return Response({
+                    'status': 'success',
+                    'data': response.data
+                }, status=status.HTTP_200_OK)
+            return Response({"message": "Permission denied. Only the post owner can update the post."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def put(self, request, *args, **kwargs):
+        user = self.get_user_from_token(request)
+        if user:
+            community = self.get_object()
+            if community.user_id == user:
+                serializer = CommunitySerializer(community, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({
+                        'status': 'success',
+                        'data': serializer.data
+                    }, status=status.HTTP_200_OK)
+                return Response({
+                    'status': 'error',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Permission denied. Only the post owner can update the post."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    def delete(self, request, *args, **kwargs):
+        user = self.get_user_from_token(request)
+        if user:
+            community = self.get_object()
+            if community.user_id == user:
+                self.perform_destroy(community)
+                return Response({
+                    'status': 'success',
+                    'message': 'Community post deleted successfully'
+                }, status=status.HTTP_204_NO_CONTENT)
+            return Response({"message": "Permission denied. Only the post owner can delete the post."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
 
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs:
@@ -38,42 +123,14 @@ class CommunityAPIView(GenericAPIView,
             return Response({
                 'status': 'success',
                 'data': serializer.data,
-                'comments': comment_serializer.data  # 관련된 댓글들을 응답에 포함
+                'comments': comment_serializer.data
             }, status=status.HTTP_200_OK)
         response = self.list(request, *args, **kwargs)
         return Response({
             'status': 'success',
             'data': response.data
         }, status=status.HTTP_200_OK)
-
-    def patch(self, request, *args, **kwargs):
-        response = self.partial_update(request, *args, **kwargs)
-        return Response({
-            'status': 'success',
-            'data': response.data
-        }, status=status.HTTP_200_OK)
-
-    def put(self, request, *args, **kwargs):
-        post_id = kwargs.get('pk')
-        post = self.get_object()
-        serializer = CommunitySerializer(post, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({
-                'status': 'success',
-                'data': serializer.data
-            }, status=status.HTTP_200_OK)
-        return Response({
-            'status': 'error',
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, *args, **kwargs):
-        self.destroy(request, *args, **kwargs)
-        return Response({
-            'status': 'success',
-            'message': 'Community post deleted successfully'
-        }, status=status.HTTP_204_NO_CONTENT)
+    
     
 class CommunityLikeAdd(APIView):
     def get_object(request, pk):
