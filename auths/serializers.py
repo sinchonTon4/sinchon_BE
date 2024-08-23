@@ -3,28 +3,46 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from auths.models import *
 from django.core.exceptions import ValidationError
 
+
+def get_allowed_domains(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        domain_map = {}
+        for line in file:
+            # 학교 이름과 도메인을 분리
+            parts = line.strip().split()
+            if len(parts) > 1:
+                univname = " ".join(parts[:-1])  # 학교 이름
+                domain = parts[-1]  # 도메인 부분
+                domain_map[domain] = univname
+    return domain_map
+
 class UserSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = User
-        fields = ['id', 'username', 'password', 'phonenum', 'email']
+        fields = ['id', 'username', 'password', 'phonenum', 'email', 'univname']
     
     def create(self, validated_data):
-        #create 함수를 작성하여 입력받은 유저 데이터 저장 처리
         email = validated_data['email']
-
+        file_path = r"auths\univname.txt"  # 또는 "auths\\univname.txt"
+        
+        # 도메인과 학교 이름 매핑 정보 가져오기
+        domain_map = get_allowed_domains(file_path)
+        
         # 이메일 도메인 검증
-        allowed_domains = ('@ewha.ac.kr', '@sogang.ac.kr', '@hongik.ac.kr', '@yonsei.ac.kr')
-        if not email.endswith(allowed_domains):
+        domain = email.split('@')[-1]  # 이메일의 도메인 부분 추출
+        if domain not in domain_map:
             raise serializers.ValidationError("회원가입은 학교 도메인 이메일만 가능합니다.")
+        
+        univname = domain_map[domain]  # 해당 도메인에 대한 학교 이름
         
         # 유저 생성 및 저장
         user = User.objects.create(
-            phonenum=validated_data['phonenum'], #전달받은 데이터 그대로 저장
+            phonenum=validated_data['phonenum'],
             username=validated_data['username'],
             email=email,
+            univname=univname  # 학교 이름 설정
         )
-        user.set_password(validated_data['password']) #암호화한 후 저장
+        user.set_password(validated_data['password'])  # 암호화한 후 저장
         user.save()
         return user
     
