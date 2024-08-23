@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'ingredients',
     'necessaries',
     'community',
+    'cobying',
 ]
 
 MIDDLEWARE = [
