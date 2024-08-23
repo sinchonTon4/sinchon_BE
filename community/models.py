@@ -14,7 +14,7 @@ class Community(models.Model):
         ('food', 'food'),
         ('lifestyle', 'lifestyle'),
     ]
-    category = models.CharField(choices=CATEGORY_CHOICES, max_length=30)
+    category = models.CharField(choices=CATEGORY_CHOICES, max_length=30, default='food')
 
     def __str__(self):
         return self.title

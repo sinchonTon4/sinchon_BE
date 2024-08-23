@@ -4,18 +4,25 @@ from django.db import models
 
 from django.db import models
 from django.conf import settings
+from community.models import *
 
-class Community(models.Model):
+class Cobying(models.Model):
     created_at = models.DateField(auto_now_add=True)
     title = models.CharField(max_length=50) #제목
     description = models.TextField() #공구설명
     img = models.ImageField(blank=True, upload_to='community_images/')
-    tag = models.ForeignKey(HashTag, on_delete=models.CASCADE, related_name='tag_interests') #수정필요 
-    price = models.intfield
-    product_name = models.TextField(max_length=50, blank=True, null=True)
+    tag = models.ForeignKey(HashTag, on_delete=models.CASCADE) #해시태그 공동구매..?
+    price = models.IntegerField(blank=True)
+    product_name = models.TextField(max_length=50)
     link = models.TextField(null=True)
-    people_num=  models.IntegerField(blank=True, null=True, unique=True)
-    product_category = models.IntegerField(blank=True, null=True, unique=True)
+    people_num=  models.IntegerField()
+    FOOD = 1
+    HOUSEHOLD = 2
+    CATEGORY_CHOICES = [
+        (FOOD, '식료품'),
+        (HOUSEHOLD, '생필품'),
+    ]
+    product_category = models.IntegerField(choices=CATEGORY_CHOICES, blank=True, null=True)
 
     def __str__(self):
-        return self.title
+        return self.product_category
