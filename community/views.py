@@ -4,6 +4,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Community
 from .serializers import CommunitySerializer
+from comments.serializers import CommentSerializer 
+from comments.models import Comment
+from rest_framework.permissions import IsAuthenticated
 
 class CommunityAPIView(GenericAPIView, 
                        CreateModelMixin, 
@@ -13,6 +16,7 @@ class CommunityAPIView(GenericAPIView,
                        ListModelMixin):
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         response = self.create(request, *args, **kwargs)
@@ -23,10 +27,15 @@ class CommunityAPIView(GenericAPIView,
 
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs:
-            response = self.retrieve(request, *args, **kwargs)
+            community = self.get_object()
+            serializer = CommunitySerializer(community)
+            
+            comments = Comment.objects.filter(community_id=community.id)
+            comment_serializer = CommentSerializer(comments, many=True)
             return Response({
                 'status': 'success',
-                'data': response.data
+                'data': serializer.data,
+                'comments': comment_serializer.data  # 관련된 댓글들을 응답에 포함
             }, status=status.HTTP_200_OK)
         response = self.list(request, *args, **kwargs)
         return Response({
