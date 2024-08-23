@@ -9,6 +9,7 @@ from comments.models import Comment
 from auths.models import User
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 from rest_framework.generics import get_object_or_404
@@ -20,6 +21,7 @@ class CommunityAPIView(GenericAPIView,
                        UpdateModelMixin, 
                        DestroyModelMixin, 
                        ListModelMixin):
+    permission_classes = [IsAuthenticated]
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
 
@@ -151,6 +153,7 @@ class CommunityAPIView(GenericAPIView,
     
     
 class CommunityLikeAdd(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         community = get_object_or_404(Community, pk=pk)
         return community
@@ -169,3 +172,24 @@ class CommunityLikeAdd(APIView):
             }
         }, status=status.HTTP_200_OK)
 
+
+class TagDetail(APIView):
+    permission_classes = [AllowAny]
+    def get_object(request, pk):
+        tag = get_object_or_404(HashTag, pk=pk)
+        return tag
+
+    # 상세 태그 조회
+    def get(self, request, pk):
+        tag = HashTag.objects.get(pk)
+        serializer = HashTagSerializer(tag)
+        return Response({
+            "status": 200,
+            "message": "상세 태그 조회 완료.",
+            "data": {
+                "tag": {
+                    "tag_id": serializer.data['id'],
+                    "tag_name": serializer.data['hashtag']
+                }
+            }    
+        }, status=status.HTTP_200_OK)

@@ -5,3 +5,8 @@ class CobyingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cobying
         fields = "__all__"
+
+class HashTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HashTag
+        fields = ['id', 'hashtag']

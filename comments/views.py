@@ -3,6 +3,7 @@ from rest_framework import status
 from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 from .models import Comment
 from .serializers import CommentSerializer
@@ -10,6 +11,7 @@ from auths.models import User
 from community.models import Community
 
 class CommentList(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, communityId):
         community = Community.objects.get(pk=communityId)
         comments = Comment.objects.filter(community_id=community)
@@ -59,6 +61,7 @@ class CommentList(APIView):
 
 
 class CommentDetail(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         comment = get_object_or_404(Comment, pk=pk)
         return comment
@@ -141,6 +144,7 @@ class CommentDetail(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
 
 class CommentLikeAdd(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         comment = get_object_or_404(Comment, pk=pk)
         return comment

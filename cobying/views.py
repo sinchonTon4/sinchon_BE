@@ -1,12 +1,14 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import Cobying
-from .serializers import CobyingSerializer
+from .models import Cobying, HashTag
+from .serializers import CobyingSerializer, HashTagSerializer
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class CobyingCreateView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         # 요청 데이터를 CobyingSerializer를 사용해 역직렬화(deserialize)
         serializer = CobyingSerializer(data=request.data)
@@ -22,6 +24,7 @@ class CobyingCreateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class CobyingListView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         product_category = request.query_params.get('category')
         order = request.query_params.get('order')
@@ -62,6 +65,7 @@ class CobyingListView(APIView):
 
 
 class CobyingDetail(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         cobying = get_object_or_404(Cobying, pk=pk)
         return cobying
@@ -73,6 +77,7 @@ class CobyingDetail(APIView):
     
 
 class CountAdd(APIView):
+    permission_classes = [IsAuthenticated]
     def get_object(request, pk):
         cobying = get_object_or_404(Cobying, pk=pk)
         return cobying
@@ -89,4 +94,26 @@ class CountAdd(APIView):
                 "cobying": cobying.id,
                 "count": cobying.count,
             }
+        }, status=status.HTTP_200_OK)
+    
+
+class TagDetail(APIView):
+    permission_classes = [AllowAny]
+    def get_object(request, pk):
+        tag = get_object_or_404(HashTag, pk=pk)
+        return tag
+
+    # 상세 태그 조회
+    def get(self, request, pk):
+        tag = HashTag.objects.get(pk)
+        serializer = HashTagSerializer(tag)
+        return Response({
+            "status": 200,
+            "message": "상세 태그 조회 완료.",
+            "data": {
+                "tag": {
+                    "tag_id": serializer.data['id'],
+                    "tag_name": serializer.data['hashtag']
+                }
+            }    
         }, status=status.HTTP_200_OK)
