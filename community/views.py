@@ -104,15 +104,14 @@ class CommunityAPIView(GenericAPIView,
                 'data': serializer.data,
                 'comments': comment_serializer.data
             }, status=status.HTTP_200_OK)
-        cobying = request.query_params.get('cobying')
-        community = request.query_params.get('community')
+
+        category = request.query_params.get('category')
         order = request.query_params.get('order')
 
         queryset = Community.objects.all().order_by('-created_at')
-        if cobying:
-            queryset = queryset.filter(city__icontains=cobying)
-        if community:
-            queryset = queryset.filter(category__icontains=community)
+
+        if category:
+            queryset = queryset.filter(category__icontains=category)
         if order == 'like':
             queryset = queryset.order_by('-like')
 
@@ -128,7 +127,8 @@ class CommunityAPIView(GenericAPIView,
                 "description": community['description'],
                 "img": community['img'],
                 "like": community['like'],
-                "user_id": community['user_id']    
+                "user_id": community['user_id'],
+                "category": community['category'],
             } for community in serializer.data
         ]
         return paginator.get_paginated_response({

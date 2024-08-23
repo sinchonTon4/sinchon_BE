@@ -6,4 +6,4 @@ class CommunitySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Community
-        fields= ['id', 'user_id', 'created_at', 'title', 'description', 'img', 'like']
+        fields= ['id', 'user_id', 'created_at', 'title', 'description', 'img', 'like', 'category']
