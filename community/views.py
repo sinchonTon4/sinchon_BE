@@ -6,7 +6,10 @@ from .models import Community
 from .serializers import CommunitySerializer
 from comments.serializers import CommentSerializer 
 from comments.models import Comment
-from rest_framework.permissions import IsAuthenticated
+from auths.models import User
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.exceptions import AuthenticationFailed
+
 
 from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
@@ -20,13 +23,75 @@ class CommunityAPIView(GenericAPIView,
                        ListModelMixin):
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        response = self.create(request, *args, **kwargs)
-        return Response({
-            'status': 'success',
-            'data': response.data
-        }, status=status.HTTP_201_CREATED)
+        # Community 생성 로직
+        try:
+            user = self.get_user_from_token(request)
+            if user:
+                serializer = CommunitySerializer(data=request.data)
+                if serializer.is_valid():
+                    serializer.save(user_id=user)
+                    return Response({
+                        'status': 'success',
+                        'data': serializer.data
+                    }, status=status.HTTP_201_CREATED)
+                # 유효하지 않은 경우 오류 응답 반환
+                return Response({
+                    'status': 'error',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except AuthenticationFailed as e:
+            return Response({"message": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # 유저가 None일 경우
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def patch(self, request, *args, **kwargs):
+        user = self.get_user_from_token(request)
+        if user:
+            community = self.get_object()
+            if community.user_id == user:
+                response = self.partial_update(request, *args, **kwargs)
+                return Response({
+                    'status': 'success',
+                    'data': response.data
+                }, status=status.HTTP_200_OK)
+            return Response({"message": "Permission denied. Only the post owner can update the post."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def put(self, request, *args, **kwargs):
+        user = self.get_user_from_token(request)
+        if user:
+            community = self.get_object()
+            if community.user_id == user:
+                serializer = CommunitySerializer(community, data=request.data)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({
+                        'status': 'success',
+                        'data': serializer.data
+                    }, status=status.HTTP_200_OK)
+                return Response({
+                    'status': 'error',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Permission denied. Only the post owner can update the post."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    def delete(self, request, *args, **kwargs):
+        user = self.get_user_from_token(request)
+        if user:
+            community = self.get_object()
+            if community.user_id == user:
+                self.perform_destroy(community)
+                return Response({
+                    'status': 'success',
+                    'message': 'Community post deleted successfully'
+                }, status=status.HTTP_204_NO_CONTENT)
+            return Response({"message": "Permission denied. Only the post owner can delete the post."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
 
     def get(self, request, *args, **kwargs):
         if 'pk' in kwargs:
@@ -38,41 +103,13 @@ class CommunityAPIView(GenericAPIView,
             return Response({
                 'status': 'success',
                 'data': serializer.data,
-                'comments': comment_serializer.data  # 관련된 댓글들을 응답에 포함
+                'comments': comment_serializer.data
             }, status=status.HTTP_200_OK)
-        
-        cobying = request.query_params.get('cobying')
-        community = request.query_params.get('community')
-        order = request.query_params.get('order')
-        
-        queryset = Community.objects.all().order_by('-created_at')
-        if cobying:
-            queryset = queryset.filter(city__icontains=cobying)
-        if community:
-            queryset = queryset.filter(category__icontains=community)
-        if order == 'like':
-            queryset = queryset.order_by('-like')
-
-        paginator = PageNumberPagination()
-        paginator.page_size = 3
-        communities = paginator.paginate_queryset(queryset, request)
-        serializer = CommunitySerializer(communities, many=True)
-
-        serialized_data = [
-            {
-                "id": community['id'],
-                "title": community['title'],
-                "description": community['description'],
-                "img": community['img'],
-                "like": community['like'],
-                "user_id": community['user_id']    
-            } for community in serializer.data
-        ]
-        return paginator.get_paginated_response({
-            "status": 200,
-            "message": "커뮤니티 조회 완료.",
-            "data": serialized_data
-        })
+        response = self.list(request, *args, **kwargs)
+        return Response({
+            'status': 'success',
+            'data': response.data
+        }, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
         response = self.partial_update(request, *args, **kwargs)
