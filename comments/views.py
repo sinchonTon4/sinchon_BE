@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from .models import Comment
 from .serializers import CommentSerializer
 from auths.models import User
-from communities.models import Community
+from community.models import Community
 
 class CommentList(APIView):
     def get(self, request, communityId):
@@ -16,12 +16,12 @@ class CommentList(APIView):
         serializer = CommentSerializer(comments, many=True)
         serialized_data = [
             {
-                "comment_id": comment['id'],
-                "user_id": comment['user_id'],
-                "community_id": comment['community_id'],
-                "description": comment['description'],
-                "like": comment['like'],
-                "createdAt": comment['created_at']
+                "comment_id": comment.get('id'),
+                "user_id": comment.get('user_id'),
+                "community_id": comment.get('community_id'),
+                "description": comment.get('description'),
+                "like": comment.get('like'),
+                "createdAt": comment.get('created_at')
             } for comment in serializer.data
         ]
         return Response({
@@ -114,7 +114,7 @@ class CommentDetail(APIView):
         else:
             return Response({
                 "status": 403,
-                "message": "해당 반려동물 수정 권한이 없습니다."
+                "message": "해당 댓글 수정 권한이 없습니다."
             }, status=status.HTTP_403_FORBIDDEN)
     
     # 댓글 삭제
@@ -139,4 +139,22 @@ class CommentDetail(APIView):
                 "status": 403,
                 "message": "해당 댓글 삭제 권한이 없습니다."
             }, status=status.HTTP_403_FORBIDDEN)
-        
+
+class CommentLikeAdd(APIView):
+    def get_object(request, pk):
+        comment = get_object_or_404(Comment, pk=pk)
+        return comment
+    
+    def patch(self, request, pk):
+        comment = self.get_object(pk)
+        comment.like += 1
+        comment.save()
+
+        return Response({
+            "status": 200,
+            "message": "댓글 LIKE 추가 완료.",
+            "data": {
+                "comment_id": comment.id,
+                "like": comment.like
+            }
+        }, status=status.HTTP_200_OK)

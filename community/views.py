@@ -10,6 +10,9 @@ from auths.models import User
 from rest_framework_simplejwt.tokens import AccessToken
 
 
+from rest_framework.generics import get_object_or_404
+from rest_framework.views import APIView
+
 class CommunityAPIView(GenericAPIView, 
                        CreateModelMixin, 
                        RetrieveModelMixin, 
@@ -128,3 +131,22 @@ class CommunityAPIView(GenericAPIView,
             'data': response.data
         }, status=status.HTTP_200_OK)
     
+    
+class CommunityLikeAdd(APIView):
+    def get_object(request, pk):
+        community = get_object_or_404(Community, pk=pk)
+        return community
+    
+    def patch(self, request, pk):
+        community = self.get_object(pk)
+        community.like += 1
+        community.save()
+
+        return Response({
+            "status": 200,
+            "message": "댓글 LIKE 추가 완료.",
+            "data": {
+                "community_id": community.id,
+                "like": community.like
+            }
+        }, status=status.HTTP_200_OK)
