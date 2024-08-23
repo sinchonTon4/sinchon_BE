@@ -6,7 +6,7 @@ class Comment(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments', null=True)
     community_id = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='comments', null=True)
     description = models.TextField()
-    like = models.IntegerField(default=0, required=False)
+    like = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
