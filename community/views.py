@@ -8,6 +8,7 @@ from comments.serializers import CommentSerializer
 from comments.models import Comment
 from auths.models import User
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.exceptions import AuthenticationFailed
 
 
 from rest_framework.generics import get_object_or_404
@@ -33,39 +34,26 @@ class CommunityAPIView(GenericAPIView,
         return None
 
     def post(self, request, *args, **kwargs):
-        if 'communityId' in kwargs:
+        # Community 생성 로직
+        try:
             user = self.get_user_from_token(request)
             if user:
-                communityId = kwargs.get('communityId')
-                community = Community.objects.get(pk=communityId)
-                serializer = CommentSerializer(data=request.data)
+                serializer = CommunitySerializer(data=request.data)
                 if serializer.is_valid():
-                    comment = Comment.objects.create(
-                        user_id=user,
-                        community_id=community,
-                        description=serializer.validated_data['description'],
-                        like=serializer.validated_data['like']
-                    )
+                    serializer.save(user_id=user)
                     return Response({
-                        "status": 201,
-                        "message": "댓글 작성 완료.",
-                        "data": {
-                            "comment_id": comment.id
-                        }    
+                        'status': 'success',
+                        'data': serializer.data
                     }, status=status.HTTP_201_CREATED)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # Community 생성 로직
-        user = self.get_user_from_token(request)
-        if user:
-            serializer = CommunitySerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save(user_id=user)
+                # 유효하지 않은 경우 오류 응답 반환
                 return Response({
-                    'status': 'success',
-                    'data': serializer.data
-                }, status=status.HTTP_201_CREATED)
+                    'status': 'error',
+                    'errors': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+        except AuthenticationFailed as e:
+            return Response({"message": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # 유저가 None일 경우
         return Response({"message": "Authorization header missing or invalid"}, status=status.HTTP_401_UNAUTHORIZED)
 
     def patch(self, request, *args, **kwargs):
