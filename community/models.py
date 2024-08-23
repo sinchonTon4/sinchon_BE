@@ -9,6 +9,7 @@ class Community(models.Model):
     img = models.ImageField(blank=True, upload_to='community_images/')
     like = models.IntegerField(default=0)
     user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True)
+    tags = models.ManyToManyField('HashTag', related_name='tagged_communities', blank=True)
     
     CATEGORY_CHOICES = [
         ('food', 'food'),
@@ -21,6 +22,7 @@ class Community(models.Model):
     
 class HashTag(models.Model):
     hashtag = models.TextField(unique=True)
+    communities = models.ManyToManyField('Community', related_name='tagged_hashtags')
 
     def __str__(self):
         return self.hashtag
