@@ -16,7 +16,7 @@ class CommunityAPIView(GenericAPIView,
                        ListModelMixin):
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
-    permission_classes = [IsAuthenticated]
+    #permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         response = self.create(request, *args, **kwargs)
