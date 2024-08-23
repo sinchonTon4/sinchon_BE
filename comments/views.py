@@ -16,12 +16,12 @@ class CommentList(APIView):
         serializer = CommentSerializer(comments, many=True)
         serialized_data = [
             {
-                "comment_id": comment['id'],
-                "user_id": comment['user_id'],
-                "community_id": comment['community_id'],
-                "description": comment['description'],
-                "like": comment['like'],
-                "createdAt": comment['created_at']
+                "comment_id": comment.get('id'),
+                "user_id": comment.get('user_id'),
+                "community_id": comment.get('community_id'),
+                "description": comment.get('description'),
+                "like": comment.get('like'),
+                "createdAt": comment.get('created_at')
             } for comment in serializer.data
         ]
         return Response({
