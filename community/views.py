@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from rest_framework.generics import get_object_or_404
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 
 class CommunityAPIView(GenericAPIView, 
                        CreateModelMixin, 
@@ -19,7 +20,6 @@ class CommunityAPIView(GenericAPIView,
                        ListModelMixin):
     queryset = Community.objects.all()
     serializer_class = CommunitySerializer
-    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         response = self.create(request, *args, **kwargs)
@@ -40,11 +40,39 @@ class CommunityAPIView(GenericAPIView,
                 'data': serializer.data,
                 'comments': comment_serializer.data  # 관련된 댓글들을 응답에 포함
             }, status=status.HTTP_200_OK)
-        response = self.list(request, *args, **kwargs)
-        return Response({
-            'status': 'success',
-            'data': response.data
-        }, status=status.HTTP_200_OK)
+        
+        cobying = request.query_params.get('cobying')
+        community = request.query_params.get('community')
+        order = request.query_params.get('order')
+        
+        queryset = Community.objects.all().order_by('-created_at')
+        if cobying:
+            queryset = queryset.filter(city__icontains=cobying)
+        if community:
+            queryset = queryset.filter(category__icontains=community)
+        if order == 'like':
+            queryset = queryset.order_by('-like')
+
+        paginator = PageNumberPagination()
+        paginator.page_size = 3
+        communities = paginator.paginate_queryset(queryset, request)
+        serializer = CommunitySerializer(communities, many=True)
+
+        serialized_data = [
+            {
+                "id": community['id'],
+                "title": community['title'],
+                "description": community['description'],
+                "img": community['img'],
+                "like": community['like'],
+                "user_id": community['user_id']    
+            } for community in serializer.data
+        ]
+        return paginator.get_paginated_response({
+            "status": 200,
+            "message": "커뮤니티 조회 완료.",
+            "data": serialized_data
+        })
 
     def patch(self, request, *args, **kwargs):
         response = self.partial_update(request, *args, **kwargs)
