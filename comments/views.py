@@ -32,18 +32,19 @@ class CommentList(APIView):
             }
         })
     
-    def post(self, request):
+    def post(self, request, communityId):
         auth_header = request.headers.get('Authorization')
         _, token = auth_header.split()
         access_token = AccessToken(token)
         user_id = access_token['user_id']
 
         user = User.objects.get(pk=user_id)
+        community = Community.objects.get(pk=communityId)
         serializer = CommentSerializer(data=request.data)
         if serializer.is_valid():
             comment = Comment.objects.create(
                 user_id = user,
-                community_id = serializer.validated_data['community_id'],
+                community_id = community,
                 description = serializer.validated_data['description'],
                 like = serializer.validated_data['like']
             )
