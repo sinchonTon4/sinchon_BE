@@ -13,3 +13,9 @@ class Community(models.Model):
 
     def __str__(self):
         return self.title
+    
+class HashTag(models.Model):
+    hashtag = models.TextField(unique=True)
+
+    def __str__(self):
+        return self.hashtag
